@@ -112,19 +112,41 @@
 </template>
 
 <script setup lang="ts">
-import { reactive } from 'vue'
+import { reactive, onMounted } from 'vue'
 import {
   AppstoreOutlined,
   UserOutlined,
   CloudUploadOutlined,
   CodeOutlined,
 } from '@ant-design/icons-vue'
+import { getStatisticsOverview } from '@/api/statisticsController'
 
 const stats = reactive({
-  totalApps: 12856,
-  activeUsers: 3420,
-  monthlyDeploys: 892,
-  totalCodeLines: 3840,
+  totalApps: 0,
+  activeUsers: 0,
+  monthlyDeploys: 0,
+  totalCodeLines: 0,
+  loading: true,
+})
+
+const loadStatistics = async () => {
+  try {
+    const res = await getStatisticsOverview()
+    if (res.data.code === 0 && res.data.data) {
+      stats.totalApps = res.data.data.totalApps || 0
+      stats.activeUsers = res.data.data.activeUsers || 0
+      stats.totalCodeLines = res.data.data.totalCodeLines || 0
+      stats.monthlyDeploys = Math.floor(res.data.data.totalApps * 0.07) || 0
+    }
+  } catch (error) {
+    console.error('获取统计数据失败:', error)
+  } finally {
+    stats.loading = false
+  }
+}
+
+onMounted(() => {
+  loadStatistics()
 })
 
 const techStacks = reactive([
